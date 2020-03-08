@@ -1,4 +1,4 @@
-OBJS = main.o pe_loader.o fake_kernel32.o
+OBJS = main.o pe_loader.o fake_kernel32.o global.o
 TARGET = loader_test
 
 CXXFLAGS = -m32 -static -std=c++17 -g

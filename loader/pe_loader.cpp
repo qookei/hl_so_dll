@@ -12,18 +12,14 @@
 void pe::reloc() {
 	printf("pe::reloc(): image base = %08x, size = %u\n", _hdr->image_base, _hdr->image_size);
 
-	size_t align_size = (_hdr->image_size + 0xFFF) & ~0xFFF;
-
-	printf("pe::reloc(): aligned size = %lu\n", align_size);
-
 	_image = mmap(
 		(void *)_hdr->image_base,
-		align_size,
+		_hdr->image_size,
 		PROT_READ | PROT_WRITE | PROT_EXEC,
 		MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
 
 	if (_image == MAP_FAILED) {
-		perror("mmap failed");
+		perror("pe::reloc(): failed to mmap image");
 		abort();
 	}
 
