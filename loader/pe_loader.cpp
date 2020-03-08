@@ -9,15 +9,6 @@
 
 #include "fake_kernel32.hpp"
 
-uint32_t pe::get_section_virt(const char *name) {
-	for (size_t i = 0; i < _hdr->n_section; i++) {
-		if (!strncmp(_hdr->sections[i].name, name, 8))
-			return _hdr->sections[i].vaddr;
-	}
-
-	__builtin_trap();
-}
-
 void pe::reloc() {
 	printf("pe::reloc(): image base = %08x, size = %u\n", _hdr->image_base, _hdr->image_size);
 
@@ -123,10 +114,9 @@ void pe::load(void *file) {
 	load_imports();
 	load_exports();
 
-	printf("pe::load(): done, calling foo(42)\n");
+	printf("pe::load(): done\n");
+}
 
-	auto foo_ptr = (int(*)(int))_export_symbols["foo"];
-	int ret = foo_ptr(42);
-
-	printf("pe::load(): foo(42) returned %d\n", ret);
+void *pe::sym(const char *name) {
+	return (void *)_export_symbols[name];
 }

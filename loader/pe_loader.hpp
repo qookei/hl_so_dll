@@ -113,8 +113,8 @@ struct PACKED hint_name_table_entry {
 
 struct pe {
 	void load(void *file);
+	void *sym(const char *name);
 private:
-	uint32_t get_section_virt(const char *name);
 	void reloc();
 	void load_imports();
 	void load_exports();

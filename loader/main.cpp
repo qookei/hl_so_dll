@@ -27,5 +27,13 @@ int main(int argc, char **argv) {
 	pe _pe{};
 	_pe.load(data);
 
+	printf("loader_test: calling foo(1337)\n");
+
+	auto foo_ptr = (int(STDCALL*)(int))_pe.sym("foo@4");
+	int ret = foo_ptr(1337);
+
+	printf("loader_test: foo(1337) returned %d\n", ret);
+
+
 	std::cout << "hello world\n";
 }
