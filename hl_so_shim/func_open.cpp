@@ -33,9 +33,9 @@ void *func_open(const char *so_name, const char *dll_name) {
 		result = global_pe_sym(dll_name);
 
 		if (result) {
-			printf("func_open(): found ('%s', '%s') in hl.dll\n", so_name ?: "(null)", dll_name);
+			fprintf(stderr, "func_open(): found '%s' in hl.dll\n", dll_name);
 		} else {
-			printf("func_open(): '%s' not found in hl.dll\n", dll_name);
+//			fprintf(stderr, "func_open(): '%s' not found in hl.dll\n", dll_name);
 		}
 	}
 
@@ -44,7 +44,7 @@ void *func_open(const char *so_name, const char *dll_name) {
 			so_handle = dlopen(STR(HL_SO_PATH), RTLD_LAZY);
 
 			if (!so_handle) {
-				printf("func_open(): failed to dlopen '%s'\n", STR(HL_SO_PATH));
+				fprintf(stderr, "func_open(): failed to dlopen '%s'\n", STR(HL_SO_PATH));
 				abort();
 			}
 
@@ -54,11 +54,16 @@ void *func_open(const char *so_name, const char *dll_name) {
 		result = dlsym(so_handle, so_name);
 
 		if (result) {
-			printf("func_open(): found ('%s', '%s') in hl.so\n", so_name, dll_name ?: "(null)");
+//			fprintf(stderr, "func_open(): found '%s' in hl.so\n", so_name);
 		} else {
-			printf("func_open(): '%s' not found in hl.so\n", so_name);
+//			fprintf(stderr, "func_open(): '%s' not found in hl.so\n", so_name);
 		}
 	}
 
 	return result;
 }
+
+void __attribute__ ((constructor)) setup(void) {
+	func_open("foo", "foo");
+}
+

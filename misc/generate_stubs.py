@@ -29,6 +29,7 @@ def comma_separate(l):
 
 def emit_stdcall_stub(so_name, dll_name, return_type, args_types, args_with_types, args_names):
     print(f'extern "C" {return_type} {so_name}({comma_separate(args_with_types)}) {{')
+    print('\tabort();')
     print(f'\tprintf("{so_name}(): reached stdcall stub function\\n");')
     print(f'\tvoid *func = func_open("{so_name}", "{dll_name}");')
     print('\tif (!func) {')
@@ -38,8 +39,21 @@ def emit_stdcall_stub(so_name, dll_name, return_type, args_types, args_with_type
     print(f'\treturn (({return_type}(STDCALL*)({comma_separate(args_types)}))func)({comma_separate(args_names)});')
     print('}\n')
 
+def emit_cdecl_stub(so_name, dll_name, return_type, args_types, args_with_types, args_names):
+    print(f'extern "C" {return_type} {so_name}({comma_separate(args_with_types)}) {{')
+    print('\tabort();')
+    print(f'\tprintf("{so_name}(): reached cdecl stub function\\n");')
+    print(f'\tvoid *func = func_open("{so_name}", "{dll_name}");')
+    print('\tif (!func) {')
+    print(f'\t\tprintf("{so_name}(): failed to load desired function in either hl.so or hl.dll\\n");')
+    print('\t\tabort();')
+    print('\t}')
+    print(f'\treturn (({return_type}(*)({comma_separate(args_types)}))func)({comma_separate(args_names)});')
+    print('}\n')
+
 def emit_thiscall_stub(so_name, dll_name, return_type, args_types, args_with_types, args_names):
     print(f'extern "C" {return_type} {so_name}({comma_separate(["void *this__"] + args_with_types)}) {{')
+    print('\tabort();')
     print(f'\tprintf("{so_name}(): reached thiscall stub function\\n");')
     print(f'\tvoid *func = func_open("{so_name}", "{dll_name}");')
     print('\tif (!func) {')
@@ -51,6 +65,7 @@ def emit_thiscall_stub(so_name, dll_name, return_type, args_types, args_with_typ
 
 def emit_cdecl_class_stub(so_name, return_type, args_types, args_with_types, args_names):
     print(f'extern "C" {return_type} {so_name}({comma_separate(["void *this__"] + args_with_types)}) {{')
+    print('\tabort();')
     print(f'\tprintf("{so_name}(): reached cdecl class stub function\\n");')
     print(f'\tvoid *func = func_open("{so_name}", nullptr);')
     print('\tif (!func) {')
@@ -172,10 +187,42 @@ for mangled, unmangled in so_syms:
     so_name = mangled
     dll_name = 'nullptr'
 
+    dll_counterpart = ('bad', 'bad')
+    for dll_sym in dll_syms:
+        dll_mangled, dll_unmangled = dll_sym
+        if mangled == unmangled:
+            if mangled == dll_mangled:
+                dll_counterpart = dll_sym
+        else:
+            parts = unmangled.split('(')
+            base_name = parts[0]
+
+            dll_parts = dll_unmangled.split('(')
+            dll_parts = dll_parts[0].split(' ')
+            if len(dll_parts) < 3:
+                continue
+            dll_base_name = dll_parts[3]
+
+            if base_name == dll_base_name:
+                dll_counterpart = dll_sym
+
+
+    if dll_counterpart[0] == 'bad':
+        continue
+
     if mangled == unmangled:
         print(f'#warning ADD PROPER PROTOTYPE FOR {mangled}');
+        dll_counterpart = ('bad', 'bad')
+        for dll_sym in dll_syms:
+            dll_mangled, dll_unmangled = dll_sym
+            if mangled == dll_mangled:
+                dll_counterpart = dll_sym
+
         # dll name and so name match for unmangled symbols (or so we hope)
-        emit_stdcall_stub(so_name, so_name, 'void', ['void *'], ['void *t'], ['t'])
+        if dll_counterpart[0] != 'bad':
+            emit_stdcall_stub(so_name, so_name, 'void', ['void *'], ['void *t'], ['t'])
+        else:
+            emit_cdecl_stub(so_name, so_name, 'void', ['void *'], ['void *t'], ['t'])
     else:
         parts = unmangled.split('(')
         base_name = parts[0]
@@ -211,7 +258,7 @@ for mangled, unmangled in so_syms:
             print(f'#warning ADD PROPER RETURN TYPES FOR {unmangled}');
             # not a class
             types, types_names, names = generate_args_and_types(unmangled)
-            emit_stdcall_stub(so_name, so_name, 'void', types, types_names, names)
+            emit_cdecl_stub(so_name, so_name, 'void', types, types_names, names)
         elif dll_counterpart[0] == 'bad':
             print(f'#warning ADD PROPER RETURN TYPES FOR {unmangled}');
             #print(f'failed to find DLL counterpart for "{unmangled}"')

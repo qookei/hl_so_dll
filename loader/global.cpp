@@ -10,6 +10,11 @@
 static pe *_pe_so;
 
 void global_pe_load(const char *name) {
+	if (_pe_so) {
+		fprintf(stderr, "global_pe_load(): already loaded");
+		return;
+	}
+
 	int fd = open(name, O_RDONLY);
 	if (fd < 0) {
 		perror("global_pe_load(): failed to open");
@@ -41,7 +46,7 @@ void global_pe_load(const char *name) {
 
 void *global_pe_sym(const char *name) {
 	if (!_pe_so) {
-		printf("global_pe_sym(): no dll loaded\n");
+		fprintf(stderr, "global_pe_sym(): no dll loaded\n");
 		abort();
 	}
 

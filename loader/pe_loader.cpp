@@ -10,7 +10,7 @@
 #include "fake_kernel32.hpp"
 
 void pe::reloc() {
-	printf("pe::reloc(): image base = %08x, size = %u\n", _hdr->image_base, _hdr->image_size);
+	fprintf(stderr, "pe::reloc(): image base = %08x, size = %u\n", _hdr->image_base, _hdr->image_size);
 
 	_image = mmap(
 		(void *)_hdr->image_base,
@@ -30,7 +30,7 @@ void pe::reloc() {
 				section.raw_size);
 	}
 
-	printf("pe::reloc(): relocated\n");
+	fprintf(stderr, "pe::reloc(): relocated\n");
 }
 
 void pe::load_imports() {
@@ -41,9 +41,9 @@ void pe::load_imports() {
 		const char *name = (const char *)rva_abs(import.name_rva);
 
 		if (strcasecmp(name, "KERNEL32.dll")) {
-			printf("pe::load_imports(): we want to import from '%s'\n", name);
-			printf("pe::load_imports(): imports from other DLLs unsupported\n");
-			printf("pe::load_imports(): only KERNEL32.dll imports and functions are implemented\n");
+			fprintf(stderr, "pe::load_imports(): we want to import from '%s'\n", name);
+			fprintf(stderr, "pe::load_imports(): imports from other DLLs unsupported\n");
+			fprintf(stderr, "pe::load_imports(): only KERNEL32.dll imports and functions are implemented\n");
 			abort();
 		}
 
@@ -51,23 +51,23 @@ void pe::load_imports() {
 		uint32_t *addrs = (uint32_t *)rva_abs(import.import_address_rva);
 
 		if (!lookups[0])
-			printf("pe::load_imports(): we want to import from '%s', but there are no lookup entries\n", name);
+			fprintf(stderr, "pe::load_imports(): we want to import from '%s', but there are no lookup entries\n", name);
 
 		for (size_t j = 0; lookups[j]; j++) {
 			auto lookup = lookups[j];
 			if (lookup & 0x80000000) {
-				printf("pe::load_imports(): ordinal imports not supported\n");
+				fprintf(stderr, "pe::load_imports(): ordinal imports not supported\n");
 				abort();
 			}
 
 			hint_name_table_entry *item = (hint_name_table_entry *)rva_abs(lookup);
 			if ((addrs[j] = lookup_fake_symbol(item->name)))
-				printf("pe::load_imports(): imported our FAKE_%s, which is at %#x\n", item->name, addrs[j]);
+				fprintf(stderr, "pe::load_imports(): imported our FAKE_%s, which is at %#x\n", item->name, addrs[j]);
 			else
-				printf("pe::load_imports(): failed to import '%s' (FAKE_%s not implemented?)\n", item->name, item->name);
+				fprintf(stderr, "pe::load_imports(): failed to import '%s' (FAKE_%s not implemented?)\n", item->name, item->name);
 		}
 	}
-	printf("pe::load_imports(): done\n");
+	fprintf(stderr, "pe::load_imports(): done\n");
 }
 
 void pe::load_exports() {
@@ -85,11 +85,11 @@ void pe::load_exports() {
 
 		uint32_t address = (uint32_t)rva_abs(rva);
 
-		printf("pe::load_exports(): '%s' exported to %#8x\n", name, address);
+		fprintf(stderr, "pe::load_exports(): '%s' exported to %#8x\n", name, address);
 		_export_symbols[name] = address;
 	}
 
-	printf("pe::load_exports(): done\n");
+	fprintf(stderr, "pe::load_exports(): done\n");
 }
 
 void *pe::rva_abs(uintptr_t rva) {
@@ -110,7 +110,7 @@ void pe::load(void *file) {
 	load_imports();
 	load_exports();
 
-	printf("pe::load(): done\n");
+	fprintf(stderr, "pe::load(): done\n");
 }
 
 void *pe::sym(const char *name) {

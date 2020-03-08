@@ -4,7 +4,7 @@ include hl_so_shim/Makefile
 OBJS = $(PE_LOADER_OBJS) $(HL_SO_SHIM_OBJS)
 TARGET = fake-hl.so
 
-CXXFLAGS = -m32 -shared -std=c++17 -g
+CXXFLAGS = -m32 -shared -std=c++17 -g -mno-sse -mno-sse2
 
 ORIGINAL_HL_SO ?= $(PWD)/hl.so
 ORIGINAL_HL_DLL ?= $(PWD)/hl.dll
